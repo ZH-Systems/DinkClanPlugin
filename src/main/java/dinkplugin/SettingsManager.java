@@ -166,6 +166,7 @@ public class SettingsManager {
         hiddenConfigKeys.add("importPolicy"); // not hidden, but shouldn't be overwritten
         webhookConfigKeys = ImmutableSet.<String>builder()
             .add("discordWebhook") // DinkPluginConfig#primaryWebhook
+            .add("clanEventWebhook") // DinkPluginConfig#clanEventWebhook
             .addAll(keysBySection.getOrDefault(DinkPluginConfig.webhookSection.toLowerCase().replace(" ", ""), Collections.emptySet()))
             .add("metadataWebhook") // MetaNotifier's configuration is in the Advanced section
             .build();

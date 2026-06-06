@@ -2,6 +2,8 @@ package dinkplugin.notifiers;
 
 import com.google.gson.Gson;
 import com.google.inject.testing.fieldbinder.Bind;
+import dinkplugin.ClanEventManager;
+import dinkplugin.ClanEventOverlay;
 import dinkplugin.DinkPlugin;
 import dinkplugin.DinkPluginConfig;
 import dinkplugin.MockedTestBase;
@@ -38,6 +40,7 @@ import net.runelite.client.discord.DiscordService;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.NPCManager;
 import net.runelite.client.ui.DrawManager;
+import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ImageCapture;
 import net.runelite.http.api.RuneLiteAPI;
 import okhttp3.Dispatcher;
@@ -110,6 +113,15 @@ abstract class MockedNotifierTest extends MockedTestBase {
     protected ConfigManager configManager = Mockito.mock(ConfigManager.class);
 
     @Bind
+    protected OverlayManager overlayManager = Mockito.mock(OverlayManager.class);
+
+    @Bind
+    protected ClanEventManager clanEventManager = Mockito.spy(new ClanEventManager(config, plugin));
+
+    @Bind
+    protected ClanEventOverlay clanEventOverlay = Mockito.spy(new ClanEventOverlay(clanEventManager));
+
+    @Bind
     protected AccountTypeTracker accountTracker = Mockito.spy(AccountTypeTracker.class);
 
     @Bind
@@ -119,7 +131,7 @@ abstract class MockedNotifierTest extends MockedTestBase {
     protected SettingsManager settingsManager = Mockito.spy(new SettingsManager(gson, client, clientThread, plugin, config, configManager, httpClient));
 
     @Bind
-    protected DiscordMessageHandler messageHandler = Mockito.spy(new DiscordMessageHandler(gson, client, drawManager, httpClient, config, executor, clientThread, discordService, imageCapture));
+    protected DiscordMessageHandler messageHandler = Mockito.spy(new DiscordMessageHandler(gson, client, drawManager, httpClient, config, executor, clientThread, discordService, imageCapture, clanEventManager));
 
     @Override
     protected void setUp() {

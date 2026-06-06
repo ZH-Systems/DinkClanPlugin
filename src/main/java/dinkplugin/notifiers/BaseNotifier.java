@@ -1,5 +1,6 @@
 package dinkplugin.notifiers;
 
+import dinkplugin.ClanEventManager;
 import dinkplugin.DinkPluginConfig;
 import dinkplugin.SettingsManager;
 import dinkplugin.domain.SeasonalPolicy;
@@ -45,6 +46,9 @@ public abstract class BaseNotifier {
     @Inject
     private DiscordMessageHandler messageHandler;
 
+    @Inject
+    private ClanEventManager clanEventManager;
+
     public boolean isEnabled() {
         return worldTracker.hasValidState() && accountTracker.hasValidState();
     }
@@ -58,7 +62,10 @@ public abstract class BaseNotifier {
     protected final void createMessage(String overrideUrl, boolean sendImage, NotificationBody<?> body) {
         // determine target url
         String override;
-        if (StringUtils.isNotBlank(config.leaguesWebhook()) && config.seasonalPolicy() == SeasonalPolicy.FORWARD_TO_LEAGUES && WorldUtils.isSeasonal(client)) {
+        String clanEventWebhook = clanEventManager.getActiveWebhookOverride();
+        if (StringUtils.isNotBlank(clanEventWebhook)) {
+            override = clanEventWebhook;
+        } else if (StringUtils.isNotBlank(config.leaguesWebhook()) && config.seasonalPolicy() == SeasonalPolicy.FORWARD_TO_LEAGUES && WorldUtils.isSeasonal(client)) {
             override = config.leaguesWebhook();
         } else {
             override = overrideUrl;

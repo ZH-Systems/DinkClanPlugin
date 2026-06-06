@@ -61,6 +61,7 @@ import net.runelite.client.events.ServerNpcLoot;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.loottracker.LootReceived;
+import net.runelite.client.ui.overlay.OverlayManager;
 import net.runelite.client.util.ColorUtil;
 
 import javax.inject.Inject;
@@ -81,6 +82,9 @@ public class DinkPlugin extends Plugin {
     private @Inject ChatMessageManager chatManager;
 
     private @Inject SettingsManager settingsManager;
+    private @Inject ClanEventManager clanEventManager;
+    private @Inject ClanEventOverlay clanEventOverlay;
+    private @Inject OverlayManager overlayManager;
     private @Inject VersionManager versionManager;
     private @Inject AccountTypeTracker accountTracker;
     private @Inject WorldTypeTracker worldTracker;
@@ -128,6 +132,8 @@ public class DinkPlugin extends Plugin {
     protected void startUp() {
         log.debug("Started up Dink");
         settingsManager.init();
+        clanEventManager.init();
+        overlayManager.add(clanEventOverlay);
         versionManager.onStart();
         accountTracker.init();
         worldTracker.init();
@@ -141,6 +147,7 @@ public class DinkPlugin extends Plugin {
     protected void shutDown() {
         log.debug("Shutting down Dink");
         this.resetNotifiers();
+        overlayManager.remove(clanEventOverlay);
         gameState.lazySet(null);
         accountTracker.clear();
         worldTracker.clear();
@@ -186,6 +193,7 @@ public class DinkPlugin extends Plugin {
         }
 
         settingsManager.onConfigChanged(event);
+        clanEventManager.onConfigChanged(event.getKey());
         accountTracker.onConfig(event.getKey());
         worldTracker.onConfig(event.getKey());
         lootNotifier.onConfigChanged(event.getKey(), event.getNewValue());
@@ -235,6 +243,7 @@ public class DinkPlugin extends Plugin {
     @Subscribe
     public void onGameTick(GameTick event) {
         settingsManager.onTick();
+        clanEventManager.onTick();
         accountTracker.onTick();
         worldTracker.onTick();
         collectionNotifier.onTick();

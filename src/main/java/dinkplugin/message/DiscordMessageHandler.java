@@ -1,6 +1,7 @@
 package dinkplugin.message;
 
 import com.google.gson.Gson;
+import dinkplugin.ClanEventManager;
 import dinkplugin.DinkPlugin;
 import dinkplugin.DinkPluginConfig;
 import dinkplugin.domain.PlayerLookupService;
@@ -43,7 +44,12 @@ import org.jetbrains.annotations.VisibleForTesting;
 import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -84,10 +90,11 @@ public class DiscordMessageHandler {
     private final ClientThread clientThread;
     private final DiscordService discordService;
     private final ImageCapture imageCapture;
+    private final ClanEventManager clanEventManager;
 
     @Inject
     @VisibleForTesting
-    public DiscordMessageHandler(Gson gson, Client client, DrawManager drawManager, OkHttpClient httpClient, DinkPluginConfig config, ScheduledExecutorService executor, ClientThread clientThread, DiscordService discordService, ImageCapture imageCapture) {
+    public DiscordMessageHandler(Gson gson, Client client, DrawManager drawManager, OkHttpClient httpClient, DinkPluginConfig config, ScheduledExecutorService executor, ClientThread clientThread, DiscordService discordService, ImageCapture imageCapture, ClanEventManager clanEventManager) {
         this.gson = gson;
         this.client = client;
         this.drawManager = drawManager;
@@ -96,6 +103,7 @@ public class DiscordMessageHandler {
         this.clientThread = clientThread;
         this.discordService = discordService;
         this.imageCapture = imageCapture;
+        this.clanEventManager = clanEventManager;
         this.httpClient = httpClient.newBuilder()
             .addInterceptor(chain -> {
                 Request request = chain.request().newBuilder()
@@ -393,6 +401,7 @@ public class DiscordMessageHandler {
             Utils.captureScreenshot(client, clientThread, drawManager, imageCapture, executor, config, future::complete);
         }
         return future.thenApplyAsync(ImageUtil::bufferedImageFromImage, executor)
+            .thenApply(this::stampClanEventText)
             .thenApply(input -> Utils.rescale(input, scalePercent))
             .thenApply(image -> {
                 try {
@@ -420,6 +429,33 @@ public class DiscordMessageHandler {
                     throw new CompletionException("Failed to resize image below Discord size limit", e);
                 }
             });
+    }
+
+    private BufferedImage stampClanEventText(BufferedImage image) {
+        String text = clanEventManager.getDisplayText();
+        if (StringUtils.isBlank(text)) {
+            return image;
+        }
+
+        Graphics2D graphics = image.createGraphics();
+        try {
+            graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            graphics.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 18));
+
+            FontMetrics metrics = graphics.getFontMetrics();
+            int padding = 8;
+            int margin = 10;
+            int width = metrics.stringWidth(text) + padding * 2;
+            int height = metrics.getHeight() + padding * 2;
+
+            graphics.setColor(new Color(0, 0, 0, 180));
+            graphics.fillRoundRect(margin, margin, width, height, 8, 8);
+            graphics.setColor(Color.WHITE);
+            graphics.drawString(text, margin + padding, margin + padding + metrics.getAscent());
+        } finally {
+            graphics.dispose();
+        }
+        return image;
     }
 
     private static List<Embed> computeEmbeds(@NotNull NotificationBody<?> body, boolean screenshot, DinkPluginConfig config) {

@@ -181,6 +181,38 @@ public class ExternalPluginNotifierTest extends MockedNotifierTest {
     }
 
     @Test
+    void testClanEventOverridesRequestedUrl() {
+        // update config mocks
+        String url = "https://example.com/clan-event";
+        when(config.clanEventEnabled()).thenReturn(true);
+        when(config.clanEventWebhook()).thenReturn(url);
+        when(config.clanEventEndTime()).thenReturn("");
+
+        // fire event
+        plugin.onPluginMessage(new PluginMessage("dink", "notify", samplePayload("https://example.com/custom")));
+
+        // verify notification
+        verifyCreateMessage(
+            url,
+            false,
+            NotificationBody.builder()
+                .type(NotificationType.EXTERNAL_PLUGIN)
+                .playerName(PLAYER_NAME)
+                .customTitle("My Title")
+                .customFooter("Sent by MyExternalPlugin via Dink")
+                .text(
+                    Template.builder()
+                        .template("Hello %TARGET% from %USERNAME%")
+                        .replacement("%TARGET%", Replacements.ofText("world"))
+                        .replacement("%USERNAME%", Replacements.ofText(PLAYER_NAME))
+                        .build()
+                )
+                .extra(new ExternalNotificationData("MyExternalPlugin", List.of(new Field("sample key", "sample value", null)), Collections.singletonMap("hello", "world")))
+                .build()
+        );
+    }
+
+    @Test
     void testImage() {
         // update config mocks
         when(config.externalSendImage()).thenReturn(ExternalScreenshotPolicy.ALWAYS);

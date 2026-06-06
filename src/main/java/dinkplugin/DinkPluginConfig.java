@@ -31,6 +31,14 @@ import java.util.Set;
 public interface DinkPluginConfig extends Config {
 
     @ConfigSection(
+        name = "Clan Event",
+        description = "Temporary clan event webhook and on-screen code settings",
+        position = -30,
+        closedByDefault = false
+    )
+    String clanEventSection = "Clan Event";
+
+    @ConfigSection(
         name = "Webhook Overrides",
         description = "Allows webhook data to be sent to a different URL, for the various notifiers",
         position = -20,
@@ -562,6 +570,59 @@ public interface DinkPluginConfig extends Config {
         section = advancedSection
     )
     default String customPlayerBadge() {
+        return "";
+    }
+
+    @ConfigItem(
+        keyName = "clanEventEnabled",
+        name = "Clan Event Active",
+        description = "Whether a clan event is currently active. While active, the clan event webhook overrides all other webhook URLs.",
+        position = -34,
+        section = clanEventSection
+    )
+    default boolean clanEventEnabled() {
+        return false;
+    }
+
+    @ConfigItem(
+        keyName = "clanEventEnabled",
+        name = "",
+        description = ""
+    )
+    void setClanEventEnabled(boolean enabled);
+
+    @ConfigItem(
+        keyName = "clanEventWebhook",
+        name = "Clan Event Webhook URLs",
+        description = "Webhook URL used for all notifications while the clan event is active.<br/>" +
+            "You can target multiple webhooks by specifying their URLs on separate lines.",
+        position = -33,
+        section = clanEventSection
+    )
+    default String clanEventWebhook() {
+        return "";
+    }
+
+    @ConfigItem(
+        keyName = "clanEventEndTime",
+        name = "Clan Event End Time",
+        description = "When the event ends. Supports ISO-8601 instants such as 2026-06-06T22:00:00Z, " +
+            "offset date-times such as 2026-06-06T22:00:00-04:00, or local date-times such as 2026-06-06T22:00:00.",
+        position = -32,
+        section = clanEventSection
+    )
+    default String clanEventEndTime() {
+        return "";
+    }
+
+    @ConfigItem(
+        keyName = "clanEventSecretCode",
+        name = "Clan Event Secret Code",
+        description = "Secret code shown on screen and stamped into screenshots while the clan event is active.",
+        position = -31,
+        section = clanEventSection
+    )
+    default String clanEventSecretCode() {
         return "";
     }
 
